@@ -1,0 +1,4 @@
+- hosts: micro
+  roles:
+    - micro
+    - nginprox

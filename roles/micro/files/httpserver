@@ -1,0 +1,80 @@
+#!/usr/bin/python2
+import BaseHTTPServer as BHS
+import json
+import psutil
+import time
+import sys
+
+HOST, PORT = '127.0.0.1', 8080
+
+def disks():
+    dr = []
+    drives = {}
+    for x in psutil.disk_partitions():
+        dr.append(x[1])
+    for x in dr:
+        drives.update({x:100 - psutil.disk_usage(x)[3]})
+    return drives
+
+def ifaces():
+    interfaces = {}
+    for x in psutil.net_if_addrs():
+        interfaces.update({'Iface ' + x:{'Addr':str(psutil.net_if_addrs()[x][0][1]), 'Netmask':str(psutil.net_if_addrs()[x][0][2])}})
+    return interfaces
+
+def conns():
+    connections = {}
+    for x in psutil.net_connections():
+        if x[5] == 'LISTEN':
+             connections.update({'Listener pid ' + str(x[6]):{'PID':x[6], 'LAddr':str(x[3][0]), 'LPort':x[3][1], 'Status':str(x[5])}})
+    return connections
+
+def users():
+    usrs = {}
+    for x in psutil.users():
+        usrs.update({x[0] + ' ' + x[1]:x[2]})
+    return usrs
+
+def datastructure():
+    struct = {'Report ' + time.asctime():\
+                  {'CPU':\
+                      {'CPU Count':(psutil.cpu_count()), 'CPU Load':psutil.cpu_percent(percpu=True)}, \
+                   'Memory':\
+                      {'Available':psutil.virtual_memory()[1], 'Used':psutil.virtual_memory()[3], 'Free':psutil.virtual_memory()[4]}, \
+                   'Disks filling, %':\
+                      disks(),\
+                   'Interfaces':\
+                      ifaces(),\
+                   'Opened ports':\
+                      conns(),\
+                   'Logged users':\
+                      users()
+                  }\
+             }
+    return struct
+
+class HTTPServer(BHS.BaseHTTPRequestHandler):
+
+    def do_HEAD(self):
+        self.send_response(200)
+        self.send_header("Content-type", "text/html")
+        self.end_headers()
+
+    def do_POST(self):
+        self.send_response(403)
+        self.send_header("Content-type", "text/html")
+        self.end_headers()
+
+    def do_GET(self):
+        self.send_response(200)
+        self.send_header("Content-type", "application/json")
+        self.end_headers()
+        self.wfile.write(json.dumps(datastructure()))
+
+if __name__ == '__main__':
+    users()
+    server_class = BHS.HTTPServer
+    httpd = server_class((HOST, PORT), HTTPServer)
+    try: httpd.serve_forever()
+    except KeyboardInterrupt: pass
+    httpd.server_close()

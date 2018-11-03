@@ -1,0 +1,16 @@
+[Unit]
+Description=System service
+After=network.target
+
+[Service]
+Type=simple
+User=root
+Group=root
+ExecStart={{primary_install_path}}{{server_file}}
+ExecStop=/bin/kill -TERM $MAINPID
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target

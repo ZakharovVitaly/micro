@@ -1,0 +1,17 @@
+server {
+    listen 80 default_server;
+    listen [::]:80 default_server;
+    server_name _;
+    return 301 https://$host;
+}
+
+server {
+    listen 443 ssl;
+    ssl_certificate  /etc/nginx/{{server_file}}.crt;
+    ssl_certificate_key /etc/nginx/{{server_file}}.key;
+    server_name _;
+    location / {
+        proxy_pass http://127.0.0.1:8080;
+        proxy_set_header Host $host;
+    }
+}
