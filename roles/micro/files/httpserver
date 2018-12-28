@@ -72,7 +72,6 @@ class HTTPServer(BHS.BaseHTTPRequestHandler):
         self.wfile.write(json.dumps(datastructure()))
 
 if __name__ == '__main__':
-    users()
     server_class = BHS.HTTPServer
     httpd = server_class((HOST, PORT), HTTPServer)
     try: httpd.serve_forever()
